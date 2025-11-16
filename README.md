@@ -1,18 +1,15 @@
 # Aegis Protocol Dashboard
 
-A sleek, modular spy agency dashboard built as a single‑page web app.  
-Includes live camera monitoring, mission logs, agent tracking, and secure vault access.
+A sleek, modular spy agency dashboard built as a single-page web app:
+- Admin panel to add agents (codename, clearance, password, face)
+- Agent login requiring password + face recognition
+- Live surveillance with stranger alerts
+- Live location map (simulated)
+- JS-only launch using Node.js (no Python)
 
-## ✨ Features
-- 🎥 **Live Surveillance** — stream from connected cameras, take snapshots, and download images
-- 📁 **Mission Tracker** — timeline of ongoing and completed operations
-- 🧠 **Intel Feed** — threat map, intercept logs, and AI predictions
-- 🧑‍💻 **Agent Directory** — codename, status, and secure messaging
-- 🔐 **Secure Vault** — encrypted archives, access logs, and emergency lockdown
-- ⚙️ **Settings** — profile management, theme toggle, and security options
-
-## 🚀 Setup
-1. Clone the repository:
+## Launch
+1. Install Node.js 18+.
+2. Install and run:
    ```bash
-   git clone https://github.com/yourusername/aegis-protocol-dashboard.git
-   cd aegis-protocol-dashboard
+   npm install
+   npm start
