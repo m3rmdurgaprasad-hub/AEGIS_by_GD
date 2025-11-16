@@ -1,11 +1,14 @@
 {
   "name": "aegis-protocol-dashboard",
   "version": "1.0.0",
-  "description": "Spy agency dashboard with admin/agent login, face recognition, live surveillance, and map.",
+  "description": "Vertical Aegis dashboard with separate login/admin pages, face recognition, map, and email alerts.",
   "scripts": {
     "start": "node server.js"
   },
   "author": "Durga",
   "license": "MIT",
-  "dependencies": {}
+  "dependencies": {
+    "nodemailer": "6.9.11"
+  },
+  "type": "module"
 }
