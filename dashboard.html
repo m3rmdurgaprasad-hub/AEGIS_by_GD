@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aegis Protocol — Dashboard</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <style>
+    :root { --bg:#0b0f14; --panel:#121821; --text:#d7e2f0; --muted:#8aa0b6; --border:#1f2a36; --accent:#2cc1ff; --accent-2:#ff3b3b; }
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#0b0f14,#0e131a);color:var(--text);font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    header{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:rgba(10,14,20,.85)}
+    .brand{display:flex;align-items:center;gap:.8rem}.motto{color:var(--muted);margin:0;font-size:.9rem}
+    main{display:flex;flex-direction:column;gap:1rem;padding:1rem}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem;max-width:1000px;margin:0 auto}
+    .row{display:flex;flex-direction:column;gap:.6rem}
+    input,button,select{background:#0b121b;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.6rem}
+    button{cursor:pointer} button:hover{border-color:var(--accent);color:var(--accent)}
+    .danger{border-color:var(--accent-2);color:var(--accent-2)}
+    video,canvas{width:100%;border:1px solid var(--border);border-radius:10px}
+    #map{width:100%;height:340px;border:1px solid var(--border);border-radius:10px}
+    ul{list-style:none;padding:0;margin:0} li{display:flex;justify-content:space-between;padding:.5rem;border-bottom:1px solid var(--border)}
+    .badge{display:inline-block;padding:.2rem .5rem;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+  </style>
+  <script defer src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img src="assets/emblem.png" alt="Aegis Protocol Emblem" style="width:40px;height:40px;border-radius:8px;" />
+      <div>
+        <h1 style="margin:0;font-size:1.25rem;">Aegis Protocol</h1>
+        <p class="motto">Vertical dashboard — surveillance, recognition, map</p>
+      </div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:.8rem;">
+      <span id="user" class="badge">User: Guest</span>
+      <button onclick="location.href='index.html'">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Surveillance -->
+    <div class="panel">
+      <h2>Live surveillance</h2>
+      <div class="row">
+        <label>Camera
+          <select id="camera"></select>
+        </label>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+          <button id="start">Start</button>
+          <button id="stop">Stop</button>
+          <button id="snapshot">Snapshot</button>
+        </div>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="snap" width="640" height="360"></canvas>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+          <span id="camStatus" class="badge">Camera idle</span>
+          <span id="recStatus" class="badge">Recognition idle</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map -->
+    <div class="panel">
+      <h2>Live map</h2>
+      <div id="map"></div>
+      <div style="margin-top:.6rem;"><span id="mapStatus" class="badge">Map ready</span></div>
+    </div>
+
+    <!-- Mission log -->
+    <div class="panel">
+      <h2>Mission log</h2>
+      <input id="search" placeholder="Search directives…" />
+      <ul id="log"></ul>
+    </div>
+
+    <!-- Intel feed -->
+    <div class="panel">
+      <h2>Intel feed</h2>
+      <ul id="intel"></ul>
+    </div>
+
+    <!-- Vault -->
+    <div class="panel">
+      <h2>Emergency lockdown</h2>
+      <p>Trigger manual override and system purge (sends email alert).</p>
+      <button id="lockdown" class="danger">Initiate Lockdown</button>
+      <span id="lockStatus" class="badge">Standby</span>
+    </div>
+  </main>
+
+  <script>
+    // --- Session ---
+    const user = sessionStorage.getItem("aegis_session") || "Guest";
+    document.getElementById("user").textContent = `User: ${user}`;
+
+    // --- DB ---
+    function getDB(){ return JSON.parse(localStorage.getItem("aegis_db") || "{}"); }
+
+    // --- Map ---
+    let map, marker;
+    function initMap(){
+      map = L.map('map').setView([12.733, 80.173], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
+      marker = L.marker([12.733, 80.173]).addTo(map).bindPopup('Awaiting agent recognition');
+    }
+    function updateLocation(name){
+      const base=[12.733,80.173];
+      const jitter=[base[0]+(Math.random()-0.5)/100, base[1]+(Math.random()-0.5)/100];
+      marker.setLatLng(jitter);
+      marker.bindPopup(`${name} — live position (simulated)`).openPopup();
+      document.getElementById("mapStatus").textContent = `Tracking: ${name}`;
+    }
+
+    // --- Camera ---
+    const cameraSel=document.getElementById("camera");
+    const startBtn=document.getElementById("start");
+    const stopBtn=document.getElementById("stop");
+    const snapBtn=document.getElementById("snapshot");
+    const video=document.getElementById("video");
+    const canvas=document.getElementById("snap");
+    const camStatus=document.getElementById("camStatus");
+    const recStatus=document.getElementById("recStatus");
+
+    async function listCameras(){
+      try{
+        await navigator.mediaDevices.getUserMedia({ video:true, audio:false }).catch(()=>{});
+        const devices=await navigator.mediaDevices.enumerateDevices();
+        const inputs=devices.filter(d=>d.kind==="videoinput");
+        cameraSel.innerHTML = "";
+        inputs.forEach((d,i)=> {
+          const o=document.createElement("option");
+          o.value=d.deviceId; o.textContent=d.label || `Camera ${i+1}`;
+          cameraSel.appendChild(o);
+        });
+        camStatus.textContent = inputs.length ? "Cameras detected" : "No cameras found";
+      }catch(e){ camStatus.textContent = "Camera listing unavailable"; }
+    }
+    async function startCamera(){
+      try{
+        const id=cameraSel.value || null;
+        const stream=await navigator.mediaDevices.getUserMedia({ video: id ? { deviceId:{ exact:id } } : { facingMode:"user" }, audio:false });
+        video.srcObject=stream; camStatus.textContent="Live";
+      }catch(e){ camStatus.textContent="Unable to start camera"; }
+    }
+    function stopCamera(){
+      const s=video.srcObject; if (s) s.getTracks().forEach(t=>t.stop()); video.srcObject=null; camStatus.textContent="Stopped";
+    }
+    snapBtn.addEventListener("click", ()=>{ const ctx=canvas.getContext("2d"); ctx.drawImage(video,0,0,canvas.width,canvas.height); });
+
+    // --- face-api ---
+    let modelsLoaded=false;
+    async function loadModels(){ const URL='https://unpkg.com/face-api.js@0.22.2/weights'; await faceapi.nets.tinyFaceDetector.loadFromUri(URL); await faceapi.nets.faceLandmark68Net.loadFromUri(URL); await faceapi.nets.faceRecognitionNet.loadFromUri(URL); modelsLoaded=true; }
+    async function captureEmb(videoEl){ if (!modelsLoaded) return null; const opts=new faceapi.TinyFaceDetectorOptions({ inputSize:256, scoreThreshold:0.5 }); const det=await faceapi.detectSingleFace(videoEl,opts).withFaceLandmarks().withFaceDescriptor(); return det?.descriptor || null; }
+    function match(a,b,t=0.6){ if(!a||!b||a.length!==b.length) return false; let sum=0; for(let i=0;i<a.length;i++){ const d=a[i]-b[i]; sum+=d*d; } return Math.sqrt(sum) < t; }
+
+    let loop=null;
+    function startRecognition(){
+      stopRecognition();
+      loop=setInterval(async ()=>{
+        const db=getDB(); const agents=Object.values(db.agents||{});
+        if (!agents.length){ recStatus.textContent="No enrolled agents"; return; }
+        const emb=await captureEmb(video);
+        if (!emb){ recStatus.textContent="No face"; return; }
+        let recognized=null;
+        for (const a of agents){ if (match(emb, Float32Array.from(a.embedding))){ recognized=a; break; } }
+        if (recognized){ recStatus.textContent=`Recognized: ${recognized.codename}`; updateLocation(recognized.codename); }
+        else { recStatus.textContent="Unknown face — alert"; }
+      }, 1500);
+    }
+    function stopRecognition(){ if (loop){ clearInterval(loop); loop=null; } }
+
+    startBtn.addEventListener("click", async ()=>{ await listCameras(); await startCamera(); if (!modelsLoaded){ recStatus.textContent="Loading models…"; await loadModels(); } recStatus.textContent="Recognizing…"; startRecognition(); });
+    stopBtn.addEventListener("click", ()=>{ stopCamera(); stopRecognition(); recStatus.textContent="Recognition idle"; });
+
+    // --- Mission log + intel ---
+    function populate(){
+      const log=document.getElementById("log");
+      ["[REDACTED]—Node ██","Directive: Aziem Echo","Recon: Latour","Asset: Harlan"].forEach((n,i)=>{
+        const li=document.createElement("li"); li.innerHTML=`<span>${n}</span><span>${(18+i)}:00 IST</span>`; log.appendChild(li);
+      });
+      document.getElementById("search").addEventListener("input", e=>{
+        const q=e.target.value.toLowerCase(); Array.from(log.children).forEach(li=> li.style.display = li.textContent.toLowerCase().includes(q) ? "" : "none");
+      });
+
+      const intel=document.getElementById("intel");
+      ["SIGINT—Channel 7","COMINT—Node C","ELINT—Sweep Δ"].forEach(n=>{ const li=document.createElement("li"); li.innerHTML=`<span>${n}</span><button>Transcript</button>`; intel.appendChild(li); });
+    }
+
+    // --- Lockdown (email trigger) ---
+    const lockBtn=document.getElementById("lockdown");
+    const lockStatus=document.getElementById("lockStatus");
+    lockBtn.addEventListener("click", async ()=>{
+      lockStatus.textContent="Lockdown initiated";
+      lockStatus.style.color="var(--accent-2)";
+      try{
+        const res=await fetch("/lockdown", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ by: user, reason: "Manual override" })
+        });
+        const j=await res.json();
+        if (j.ok){ lockStatus.textContent="Lockdown email sent"; } else { lockStatus.textContent="Email failed"; }
+      }catch(e){ lockStatus.textContent="Email failed"; }
+    });
+
+    // --- Init ---
+    (async function init(){
+      initMap(); populate(); await listCameras();
+    })();
+  </script>
+</body>
+</html>
