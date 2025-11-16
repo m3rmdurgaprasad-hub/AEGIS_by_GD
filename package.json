@@ -1,0 +1,11 @@
+{
+  "name": "aegis-protocol-dashboard",
+  "version": "1.0.0",
+  "description": "Spy agency dashboard with admin/agent login, face recognition, live surveillance, and map.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Durga",
+  "license": "MIT",
+  "dependencies": {}
+}
