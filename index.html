@@ -4,12 +4,149 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Aegis Protocol — AEGIS:HQ</title>
-  <link rel="stylesheet" href="styles.css" />
+  <style>
+    :root {
+      --bg: #0b0f14; --bg-alt: #0e131a; --panel: #121821; --text: #d7e2f0;
+      --muted: #8aa0b6; --accent: #2cc1ff; --accent-2: #ff3b3b; --accent-3: #33e1a2; --border: #1f2a36;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; background: linear-gradient(180deg, var(--bg), var(--bg-alt));
+      color: var(--text); font-family: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    .header {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 1rem; align-items: center;
+      padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+      background: rgba(10, 14, 20, 0.85); backdrop-filter: blur(6px); position: sticky; top: 0; z-index: 50;
+    }
+    .brand { display: flex; align-items: center; gap: 1rem; }
+    .brand-text h1 { margin: 0; font-size: 1.3rem; letter-spacing: 0.6px; }
+    .motto { margin: 0; font-size: 0.8rem; color: var(--muted); }
+    .logo { position: relative; width: 40px; height: 40px; }
+    .logo-core { position: absolute; inset: 10px; border-radius: 50%; background: #3aa6ff; box-shadow: 0 0 12px #22b0ff inset; }
+    .logo-arc { position: absolute; left: 8px; right: 8px; top: 14px; height: 6px; border-radius: 6px; background: #ff2f2f; }
+    .logo-point { position: absolute; width: 8px; height: 18px; background: #2a3442; }
+    .logo-point.top { top: 0; left: calc(50% - 4px); }
+    .logo-point.bottom { bottom: 0; left: calc(50% - 4px); }
+    .logo-point.left { left: 0; top: calc(50% - 9px); }
+    .logo-point.right { right: 0; top: calc(50% - 9px); }
+
+    .nav { display: flex; gap: 0.5rem; }
+    .nav-link {
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      padding: 0.5rem 0.8rem; border-radius: 8px; cursor: pointer;
+    }
+    .nav-link:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-link.active { background: #09121b; border-color: var(--accent); color: var(--accent); }
+
+    .profile { display: flex; align-items: center; gap: 0.6rem; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: #223042; display:flex; align-items:center; justify-content:center; color:#9ec9ff; font-weight:600; }
+    .profile-meta .name { margin-right: 0.6rem; }
+    .logout { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 0.3rem 0.6rem; cursor: pointer; }
+    .logout:hover { color: #ff7d7d; border-color: #ff7d7d; }
+
+    .main { padding: 1.2rem; }
+    .route { display: none; }
+    .route.visible { display: block; }
+
+    .grid { display: grid; gap: 1rem; }
+    .grid-home {
+      grid-template-columns: 2fr 1fr;
+      grid-template-areas:
+        "welcome tiles"
+        "surveillance divisions"
+        "mission-log mission-log";
+    }
+    .welcome { grid-area: welcome; }
+    .tiles { grid-area: tiles; }
+    .surveillance { grid-area: surveillance; }
+    .divisions { grid-area: divisions; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    .mission-log { grid-area: mission-log; }
+
+    .grid-two { grid-template-columns: 1fr 1fr; }
+
+    .panel {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1rem; box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .controls { display: flex; align-items: center; gap: 0.6rem; }
+
+    .tiles .tile {
+      display: flex; gap: 0.8rem; align-items: center;
+      background: #0f1722; border: 1px solid var(--border);
+      padding: 0.8rem; border-radius: 10px; cursor: pointer;
+    }
+    .tiles .tile:hover { border-color: var(--accent); color: var(--accent); }
+
+    .select, input[type="search"], input, select {
+      background: #0b121b; border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; padding: 0.5rem 0.6rem;
+    }
+
+    .btn {
+      background: #111a26; border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 0.5rem 0.8rem;
+      cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { border-color: var(--accent); color: var(--accent); }
+    .btn.danger { border-color: var(--accent-2); color: var(--accent-2); }
+
+    .status-badge {
+      display: inline-block; padding: 0.2rem 0.5rem; border-radius: 999px;
+      border: 1px solid var(--border); color: var(--muted); font-size: 0.8rem;
+    }
+    .status-active { color: var(--accent-3); border-color: var(--accent-3); }
+    .tally { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .tally-number { font-size: 2rem; color: var(--accent); }
+    .tally-label { color: var(--muted); }
+
+    .list { list-style: none; padding: 0; margin: 0; }
+    .list li {
+      display: flex; justify-content: space-between; gap: 1rem;
+      padding: 0.6rem; border-bottom: 1px solid var(--border);
+    }
+    .cards { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.8rem; }
+    .cards li { background: #0f1722; border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem; }
+
+    .surveillance-content {
+      display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; align-items: start;
+    }
+    #video { width: 100%; height: 100%; background: #0a0f16; border-radius: 10px; border: 1px solid var(--border); }
+    #snapshotCanvas { width: 100%; background: #0a0f16; border-radius: 10px; border: 1px solid var(--border); }
+
+    .footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.8rem 1.2rem; border-top: 1px solid var(--border); color: var(--muted);
+    }
+
+    .form label { display: grid; gap: 0.3rem; margin-bottom: 0.8rem; }
+    .globe-placeholder {
+      height: 240px; border: 1px dashed var(--border); border-radius: 10px;
+      display:flex; align-items:center; justify-content:center; color: var(--muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 1000px) {
+      .grid-home {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "welcome"
+          "tiles"
+          "surveillance"
+          "divisions"
+          "mission-log";
+      }
+      .divisions { grid-template-columns: 1fr 1fr; }
+      .surveillance-content { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
   <header class="header">
     <div class="brand">
-      <!-- Replace with your emblem image if desired -->
       <div class="logo">
         <span class="logo-core"></span>
         <span class="logo-arc"></span>
@@ -93,6 +230,7 @@
               <button id="startCamera" class="btn primary">Start</button>
               <button id="stopCamera" class="btn">Stop</button>
               <button id="snapshot" class="btn">Snapshot</button>
+              <button id="downloadSnap" class="btn">Download</button>
             </div>
           </div>
           <div class="surveillance-content">
@@ -101,6 +239,11 @@
             <div class="surveillance-footer">
               <span id="cameraStatus" class="status-badge">Idle</span>
             </div>
+          </div>
+          <div class="panel" style="margin-top:1rem;">
+            <h3>Fallback capture</h3>
+            <p class="motto">If live camera is blocked, you can still capture via file input.</p>
+            <input id="fileCapture" type="file" accept="image/*;capture=camera" />
           </div>
         </div>
 
@@ -257,6 +400,279 @@
     <span>Build v1.0</span>
   </footer>
 
-  <script src="app.js"></script>
+  <script>
+    // Basic SPA navigation
+    const routes = Array.from(document.querySelectorAll(".route"));
+    const navLinks = Array.from(document.querySelectorAll(".nav-link"));
+    const lastLoginEl = document.getElementById("lastLogin");
+    lastLoginEl.textContent = new Date().toLocaleString();
+
+    navLinks.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const route = btn.dataset.route;
+        navLinks.forEach(b => b.classList.toggle("active", b === btn));
+        routes.forEach(r => r.classList.toggle("visible", r.id === route));
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+    document.querySelectorAll(".tile").forEach(t => {
+      t.addEventListener("click", () => {
+        const route = t.dataset.route;
+        const anchor = t.dataset.anchor;
+        const targetBtn = document.querySelector(\`.nav-link[data-route="\${route}"]\`);
+        targetBtn?.click();
+        if (anchor) document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+
+    // Sample data
+    const missionList = document.getElementById("missionList");
+    [
+      { name: "[REDACTED]—Node ██", time: "19:32 IST" },
+      { name: "Directive: Aziem Echo", time: "18:14 IST" },
+      { name: "Recon: Latour", time: "16:59 IST" },
+      { name: "Asset: Harlan", time: "15:07 IST" },
+    ].forEach(item => {
+      const li = document.createElement("li");
+      li.innerHTML = \`<span>\${item.name}</span><span>\${item.time}</span>\`;
+      missionList.appendChild(li);
+    });
+    document.getElementById("missionSearch").addEventListener("input", e => {
+      const q = e.target.value.toLowerCase();
+      Array.from(missionList.children).forEach(li => {
+        li.style.display = li.textContent.toLowerCase().includes(q) ? "" : "none";
+      });
+    });
+
+    const missionTracker = document.getElementById("missionTracker");
+    ["OP-231: Spectral Insert", "OP-198: Perimeter Sweep", "OP-177: Silent Relay"].forEach(m => {
+      const li = document.createElement("li");
+      li.innerHTML = \`<span>\${m}</span><span class="status-badge status-active">Active</span>\`;
+      missionTracker.appendChild(li);
+    });
+    const assignmentBoard = document.getElementById("assignmentBoard");
+    ["Brief—EchoNet Backtrace", "Task—Obsidian Integrity Audit", "Recon—Border Node Scan"].forEach(m => {
+      const li = document.createElement("li");
+      li.innerHTML = \`<span>\${m}</span><span class="status-badge">ETA 12h</span>\`;
+      assignmentBoard.appendChild(li);
+    });
+    const fieldReports = document.getElementById("fieldReports");
+    ["Report—Harlan/Delta", "Report—Latour/Beta", "Report—Aziem/Gamma"].forEach(m => {
+      const li = document.createElement("li");
+      li.innerHTML = \`<span>\${m}</span><button class="btn">Open</button>\`;
+      fieldReports.appendChild(li);
+    });
+
+    const interceptLogs = document.getElementById("interceptLogs");
+    ["SIGINT—Channel 7", "COMINT—Node C", "ELINT—Sweep Δ"].forEach(m => {
+      const li = document.createElement("li");
+      li.innerHTML = \`<span>\${m}</span><button class="btn">Transcript</button>\`;
+      interceptLogs.appendChild(li);
+    });
+    const aiPredictions = document.getElementById("aiPredictions");
+    ["Risk—Sector East: Medium", "Risk—Harbor Grid: High", "Risk—Uplink Ring: Low"].forEach(m => {
+      const li = document.createElement("li");
+      li.innerHTML = \`<span>\${m}</span><button class="btn">Details</button>\`;
+      aiPredictions.appendChild(li);
+    });
+
+    const agentDirectory = document.getElementById("agentDirectory");
+    [
+      { code: "Specter-01", loc: "HQ", status: "Active" },
+      { code: "Wraith-22", loc: "Field", status: "Standby" },
+      { code: "Ghost-15", loc: "Harbor", status: "Active" },
+      { code: "Cipher-07", loc: "Grid", status: "Standby" },
+    ].forEach(a => {
+      const li = document.createElement("li");
+      li.innerHTML = \`
+        <div><strong>\${a.code}</strong></div>
+        <div><strong>Location:</strong> \${a.loc}</div>
+        <div><strong>Status:</strong> \${a.status}</div>
+      \`;
+      agentDirectory.appendChild(li);
+    });
+    const performanceMetrics = document.getElementById("performanceMetrics");
+    [
+      ["Specter-01", "Success 96%"],
+      ["Wraith-22", "Success 89%"],
+      ["Ghost-15", "Success 92%"],
+      ["Cipher-07", "Success 87%"],
+    ].forEach(([name, metric]) => {
+      const li = document.createElement("li");
+      li.innerHTML = \`<span>\${name}</span><span>\${metric}</span>\`;
+      performanceMetrics.appendChild(li);
+    });
+
+    const messages = document.getElementById("messages");
+    const messageInput = document.getElementById("messageInput");
+    document.getElementById("sendMessage").addEventListener("click", () => {
+      if (!messageInput.value.trim()) return;
+      const li = document.createElement("li");
+      li.innerHTML = \`<span>Outbound (Encrypted)</span><span>\${messageInput.value}</span>\`;
+      messages.prepend(li);
+      messageInput.value = "";
+    });
+
+    const archives = document.getElementById("archives");
+    ["Blueprint—Node ███", "Protocol—Omega Layer", "Key—Obsidian Vault"].forEach(a => {
+      const li = document.createElement("li");
+      li.innerHTML = \`<span>\${a}</span><button class="btn">Decrypt</button>\`;
+      archives.appendChild(li);
+    });
+    const accessLogs = document.getElementById("accessLogs");
+    ["Redmond—Vault Read", "Ghost-15—Archive Write", "Wraith-22—Lockdown Test"].forEach(a => {
+      const li = document.createElement("li");
+      li.innerHTML = \`<span>\${a}</span><span>\${new Date().toLocaleTimeString()}</span>\`;
+      accessLogs.appendChild(li);
+    });
+    const lockdownBtn = document.getElementById("lockdown");
+    const lockdownStatus = document.getElementById("lockdownStatus");
+    lockdownBtn.addEventListener("click", () => {
+      lockdownStatus.textContent = "Lockdown initiated";
+      lockdownStatus.classList.add("status-active");
+    });
+
+    // Theme
+    document.querySelectorAll(".theme-toggle .btn").forEach(b => {
+      b.addEventListener("click", () => {
+        const theme = b.dataset.theme;
+        const root = document.documentElement.style;
+        if (theme === "light") {
+          root.setProperty("--bg", "#f6f8fb"); root.setProperty("--bg-alt", "#ffffff");
+          root.setProperty("--panel", "#ffffff"); root.setProperty("--text", "#0e1726");
+          root.setProperty("--muted", "#5b6b7f"); root.setProperty("--border", "#e2e8f0");
+        } else if (theme === "stealth") {
+          root.setProperty("--bg", "#000000"); root.setProperty("--bg-alt", "#000000");
+          root.setProperty("--panel", "#050505"); root.setProperty("--text", "#9bdcff");
+          root.setProperty("--muted", "#6a7a88"); root.setProperty("--border", "#111111");
+        } else {
+          root.setProperty("--bg", "#0b0f14"); root.setProperty("--bg-alt", "#0e131a");
+          root.setProperty("--panel", "#121821"); root.setProperty("--text", "#d7e2f0");
+          root.setProperty("--muted", "#8aa0b6"); root.setProperty("--border", "#1f2a36");
+        }
+      });
+    });
+
+    // Camera monitoring (inline, single-file)
+    const cameraSelect = document.getElementById("cameraSelect");
+    const startBtn = document.getElementById("startCamera");
+    const stopBtn = document.getElementById("stopCamera");
+    const snapshotBtn = document.getElementById("snapshot");
+    const downloadBtn = document.getElementById("downloadSnap");
+    const fileCapture = document.getElementById("fileCapture");
+    const videoEl = document.getElementById("video");
+    const canvasEl = document.getElementById("snapshotCanvas");
+    const cameraStatus = document.getElementById("cameraStatus");
+    let currentStream = null;
+
+    function isSecureContextAvailable() {
+      return window.isSecureContext; // Required by most browsers for getUserMedia
+    }
+
+    async function listCameras() {
+      try {
+        // Request permission so labels appear
+        if (isSecureContextAvailable()) {
+          await navigator.mediaDevices.getUserMedia({ video: true, audio: false }).catch(() => {});
+        }
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoInputs = devices.filter(d => d.kind === "videoinput");
+        cameraSelect.innerHTML = "";
+        videoInputs.forEach((device, idx) => {
+          const opt = document.createElement("option");
+          opt.value = device.deviceId;
+          opt.textContent = device.label || \`Camera \${idx + 1}\`;
+          cameraSelect.appendChild(opt);
+        });
+        cameraStatus.textContent = videoInputs.length ? "Cameras detected" : "No cameras found";
+      } catch (err) {
+        console.error(err);
+        cameraStatus.textContent = "Camera listing unavailable";
+      }
+    }
+
+    async function startCamera() {
+      try {
+        if (!("mediaDevices" in navigator)) {
+          cameraStatus.textContent = "MediaDevices API not available";
+          return;
+        }
+        if (!isSecureContextAvailable()) {
+          cameraStatus.textContent = "Live camera requires a secure context";
+          return;
+        }
+        const deviceId = cameraSelect.value || undefined;
+        const constraints = {
+          video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "user" },
+          audio: false
+        };
+        stopCamera();
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        currentStream = stream;
+        videoEl.srcObject = stream;
+        cameraStatus.textContent = "Live";
+        cameraStatus.classList.add("status-active");
+      } catch (err) {
+        console.error(err);
+        cameraStatus.textContent = "Unable to start camera";
+        cameraStatus.classList.remove("status-active");
+      }
+    }
+
+    function stopCamera() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(t => t.stop());
+        currentStream = null;
+        videoEl.srcObject = null;
+      }
+      cameraStatus.textContent = "Stopped";
+      cameraStatus.classList.remove("status-active");
+    }
+
+    function takeSnapshot() {
+      const ctx = canvasEl.getContext("2d");
+      if (videoEl.srcObject) {
+        const w = canvasEl.width, h = canvasEl.height;
+        ctx.drawImage(videoEl, 0, 0, w, h);
+      }
+    }
+
+    function downloadSnapshot() {
+      const url = canvasEl.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `aegis_snapshot_${Date.now()}.png`;
+      a.click();
+    }
+
+    // Fallback: file input -> draw to canvas
+    fileCapture.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        const ctx = canvasEl.getContext("2d");
+        // Fit image into canvas while preserving aspect ratio
+        const cw = canvasEl.width, ch = canvasEl.height;
+        const scale = Math.min(cw / img.width, ch / img.height);
+        const iw = img.width * scale, ih = img.height * scale;
+        const ox = (cw - iw) / 2, oy = (ch - ih) / 2;
+        ctx.clearRect(0, 0, cw, ch);
+        ctx.drawImage(img, ox, oy, iw, ih);
+        cameraStatus.textContent = "Image loaded";
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
+    startBtn.addEventListener("click", startCamera);
+    stopBtn.addEventListener("click", stopCamera);
+    snapshotBtn.addEventListener("click", takeSnapshot);
+    downloadBtn.addEventListener("click", downloadSnapshot);
+
+    navigator.mediaDevices?.addEventListener?.("devicechange", listCameras);
+
+    // Initialize
+    listCameras();
+  </script>
 </body>
 </html>
