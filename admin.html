@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aegis Protocol — Admin</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <style>
+    :root { --bg:#0b0f14; --panel:#121821; --text:#d7e2f0; --muted:#8aa0b6; --border:#1f2a36; --accent:#2cc1ff; }
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#0b0f14,#0e131a);color:var(--text);font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    header{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:rgba(10,14,20,.85)}
+    .brand{display:flex;align-items:center;gap:.8rem}.motto{color:var(--muted);margin:0;font-size:.9rem}
+    main{display:flex;flex-direction:column;gap:1rem;padding:1rem}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem;max-width:860px;margin:0 auto}
+    .row{display:flex;flex-direction:column;gap:.6rem}
+    input,button{background:#0b121b;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.6rem}
+    button{cursor:pointer} button:hover{border-color:var(--accent);color:var(--accent)}
+    video{width:100%;border:1px solid var(--border);border-radius:10px}
+    ul{list-style:none;padding:0;margin:0} li{display:flex;justify-content:space-between;padding:.5rem;border-bottom:1px solid var(--border)}
+  </style>
+  <script defer src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img src="assets/emblem.png" alt="Aegis Protocol Emblem" style="width:40px;height:40px;border-radius:8px;" />
+      <div>
+        <h1 style="margin:0;font-size:1.25rem;">Admin panel</h1>
+        <p class="motto">Add agents with password + face embedding</p>
+      </div>
+    </div>
+    <div style="margin-left:auto;">
+      <button onclick="location.href='index.html'">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="panel">
+      <h2>Add agent</h2>
+      <div class="row">
+        <input id="code" placeholder="Codename" />
+        <input id="clearance" placeholder="Clearance (Alpha/Omega/Sigma)" />
+        <input id="password" type="password" placeholder="Password" />
+        <button id="capture">Capture face</button>
+        <button id="save">Save agent</button>
+        <span id="status" style="color:var(--muted)">Awaiting input</span>
+      </div>
+      <video id="video" autoplay playsinline style="margin-top:.6rem;"></video>
+    </div>
+
+    <div class="panel">
+      <h2>Agents</h2>
+      <ul id="list"></ul>
+    </div>
+  </main>
+
+  <script>
+    function getDB(){ return JSON.parse(localStorage.getItem("aegis_db") || "{}"); }
+    function setDB(db){ localStorage.setItem("aegis_db", JSON.stringify(db)); }
+    function hash(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h<<5)-h + s.charCodeAt(i); h|=0 } return String(h); }
+
+    const video=document.getElementById("video");
+    async function startCam(){ try{ const s=await navigator.mediaDevices.getUserMedia({ video:true, audio:false }); video.srcObject=s; }catch(e){ console.log(e); } }
+    startCam();
+
+    let modelsLoaded=false;
+    async function loadModels(){ const URL='https://unpkg.com/face-api.js@0.22.2/weights'; await faceapi.nets.tinyFaceDetector.loadFromUri(URL); await faceapi.nets.faceLandmark68Net.loadFromUri(URL); await faceapi.nets.faceRecognitionNet.loadFromUri(URL); modelsLoaded=true; }
+    async function captureEmb(video){ if (!modelsLoaded) return null; const opts=new faceapi.TinyFaceDetectorOptions({ inputSize:256, scoreThreshold:0.5 }); const det=await faceapi.detectSingleFace(video,opts).withFaceLandmarks().withFaceDescriptor(); return det?.descriptor || null; }
+
+    const statusEl=document.getElementById("status");
+    document.getElementById("capture").addEventListener("click", async ()=>{
+      statusEl.textContent="Loading models…"; await loadModels();
+      statusEl.textContent="Scanning…";
+      const emb=await captureEmb(video);
+      if (emb){ video._emb=emb; statusEl.textContent="Face captured"; } else { statusEl.textContent="No face detected"; }
+    });
+
+    function renderList(){
+      const db=getDB(); const list=document.getElementById("list"); list.innerHTML="";
+      Object.values(db.agents||{}).forEach(a=>{
+        const li=document.createElement("li");
+        li.innerHTML = `<span>${a.codename}</span><span>Clearance: ${a.clearance}</span><button>Remove</button>`;
+        li.querySelector("button").addEventListener("click",()=>{ const db2=getDB(); delete db2.agents[a.codename]; setDB(db2); renderList(); });
+        list.appendChild(li);
+      });
+    }
+    renderList();
+
+    document.getElementById("save").addEventListener("click", ()=>{
+      const code=document.getElementById("code").value.trim();
+      const clearance=(document.getElementById("clearance").value.trim() || "Omega");
+      const pass=document.getElementById("password").value;
+      if (!code || !pass){ statusEl.textContent="Codename and password required"; return; }
+      const db=getDB(); db.agents=db.agents||{};
+      if (db.agents[code]){ statusEl.textContent="Agent exists"; return; }
+      const emb=video._emb; if (!emb){ statusEl.textContent="Capture face first"; return; }
+      db.agents[code]={ codename:code, clearance, passHash:hash(pass), embedding:Array.from(emb), lastLocation:[12.733,80.173] };
+      setDB(db); statusEl.textContent=`Saved ${code}`; renderList();
+    });
+  </script>
+</body>
+</html>
