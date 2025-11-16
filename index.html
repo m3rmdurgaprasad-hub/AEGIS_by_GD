@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aegis Protocol — AEGIS:HQ</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <!-- Replace with your emblem image if desired -->
+      <div class="logo">
+        <span class="logo-core"></span>
+        <span class="logo-arc"></span>
+        <span class="logo-point top"></span>
+        <span class="logo-point right"></span>
+        <span class="logo-point bottom"></span>
+        <span class="logo-point left"></span>
+      </div>
+      <div class="brand-text">
+        <h1>Aegis Protocol</h1>
+        <p class="motto">We see what others miss.</p>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-link active" data-route="home">Dashboard</button>
+      <button class="nav-link" data-route="operations">Operations</button>
+      <button class="nav-link" data-route="intel">Intel Feed</button>
+      <button class="nav-link" data-route="agents">Agents</button>
+      <button class="nav-link" data-route="vault">Secure Vault</button>
+      <button class="nav-link" data-route="settings">Settings</button>
+    </nav>
+    <div class="profile">
+      <div class="avatar">RP</div>
+      <div class="profile-meta">
+        <span class="name">Redmond</span>
+        <button class="logout">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- HOME -->
+    <section id="home" class="route visible">
+      <div class="grid grid-home">
+        <div class="panel welcome">
+          <h2>Welcome, Agent <span class="codename">Aegis-47</span></h2>
+          <div class="meta">
+            <div><strong>Status:</strong> <span class="status-badge status-active">Active</span></div>
+            <div><strong>Last login:</strong> <span id="lastLogin"></span></div>
+          </div>
+        </div>
+
+        <div class="panel tiles">
+          <div class="tile" data-route="home" data-anchor="surveillance">
+            <div class="tile-icon">🎥</div>
+            <div class="tile-text">
+              <h3>Live Surveillance</h3>
+              <p>Real-time feeds from connected cameras</p>
+            </div>
+          </div>
+          <div class="tile" data-route="operations">
+            <div class="tile-icon">📁</div>
+            <div class="tile-text">
+              <h3>Mission Briefs</h3>
+              <p>Assigned operations and objectives</p>
+            </div>
+          </div>
+          <div class="tile" data-route="intel">
+            <div class="tile-icon">🧠</div>
+            <div class="tile-text">
+              <h3>Intel Feed</h3>
+              <p>Intercepts and AI threat analysis</p>
+            </div>
+          </div>
+          <div class="tile" data-route="settings">
+            <div class="tile-icon">🛡️</div>
+            <div class="tile-text">
+              <h3>Security Protocols</h3>
+              <p>System health and alerts</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Surveillance -->
+        <div class="panel surveillance" id="surveillance">
+          <div class="panel-header">
+            <h2>Live Surveillance</h2>
+            <div class="controls">
+              <label for="cameraSelect">Camera:</label>
+              <select id="cameraSelect" class="select"></select>
+              <button id="startCamera" class="btn primary">Start</button>
+              <button id="stopCamera" class="btn">Stop</button>
+              <button id="snapshot" class="btn">Snapshot</button>
+            </div>
+          </div>
+          <div class="surveillance-content">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="snapshotCanvas" width="640" height="360"></canvas>
+            <div class="surveillance-footer">
+              <span id="cameraStatus" class="status-badge">Idle</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Division panels -->
+        <div class="panel divisions">
+          <div class="division">
+            <h3>Spectral Ops</h3>
+            <p>Field agents specializing in infiltration, extraction, and counterintelligence.</p>
+            <button class="btn">Current Missions</button>
+          </div>
+          <div class="division">
+            <h3>EchoNet</h3>
+            <p>Digital surveillance, signal interception, and AI-driven threat analysis.</p>
+            <button class="btn">View Analysis</button>
+          </div>
+          <div class="division">
+            <h3>Obsidian Vault</h3>
+            <p>Secure data repository and black site operations hub.</p>
+            <button class="btn">Access Files</button>
+          </div>
+          <div class="division tally">
+            <div class="tally-number" id="agentsOnline">47</div>
+            <div class="tally-label">Agents Online</div>
+          </div>
+        </div>
+
+        <!-- Mission Log -->
+        <div class="panel mission-log">
+          <div class="panel-header">
+            <h2>Mission Log</h2>
+            <input type="search" id="missionSearch" placeholder="Search directives…" />
+          </div>
+          <ul id="missionList" class="list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPERATIONS -->
+    <section id="operations" class="route">
+      <div class="grid grid-two">
+        <div class="panel">
+          <h2>Mission Tracker</h2>
+          <ul id="missionTracker" class="list"></ul>
+        </div>
+        <div class="panel">
+          <h2>Assignment Board</h2>
+          <ul id="assignmentBoard" class="list"></ul>
+        </div>
+        <div class="panel">
+          <h2>Field Reports</h2>
+          <ul id="fieldReports" class="list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTEL FEED -->
+    <section id="intel" class="route">
+      <div class="grid grid-two">
+        <div class="panel">
+          <h2>Threat Map</h2>
+          <div class="globe-placeholder">Interactive globe placeholder</div>
+        </div>
+        <div class="panel">
+          <h2>Intercept Logs</h2>
+          <ul id="interceptLogs" class="list"></ul>
+        </div>
+        <div class="panel">
+          <h2>AI Predictions</h2>
+          <ul id="aiPredictions" class="list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGENTS -->
+    <section id="agents" class="route">
+      <div class="grid grid-two">
+        <div class="panel">
+          <h2>Agent Directory</h2>
+          <ul id="agentDirectory" class="cards"></ul>
+        </div>
+        <div class="panel">
+          <h2>Performance Metrics</h2>
+          <ul id="performanceMetrics" class="list"></ul>
+        </div>
+        <div class="panel">
+          <h2>Secure Messaging</h2>
+          <div class="messaging">
+            <ul id="messages" class="list"></ul>
+            <div class="compose">
+              <input id="messageInput" placeholder="Type encrypted message…" />
+              <button id="sendMessage" class="btn primary">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECURE VAULT -->
+    <section id="vault" class="route">
+      <div class="grid grid-two">
+        <div class="panel">
+          <h2>Encrypted Archives</h2>
+          <ul id="archives" class="list"></ul>
+        </div>
+        <div class="panel">
+          <h2>Access Logs</h2>
+          <ul id="accessLogs" class="list"></ul>
+        </div>
+        <div class="panel">
+          <h2>Emergency Lockdown</h2>
+          <p>Trigger a manual override and system purge.</p>
+          <button id="lockdown" class="btn danger">Initiate Lockdown</button>
+          <span id="lockdownStatus" class="status-badge">Standby</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settings" class="route">
+      <div class="grid grid-two">
+        <div class="panel">
+          <h2>Profile Management</h2>
+          <form id="profileForm" class="form">
+            <label>Codename<input name="codename" value="Aegis-47" /></label>
+            <label>Clearance Level<select name="clearance">
+              <option>Alpha</option><option selected>Omega</option><option>Sigma</option>
+            </select></label>
+            <label>Biometrics<input name="biometrics" placeholder="Registered" /></label>
+            <button class="btn primary" type="submit">Save</button>
+          </form>
+        </div>
+        <div class="panel">
+          <h2>Theme</h2>
+          <div class="theme-toggle">
+            <button class="btn" data-theme="dark">Dark</button>
+            <button class="btn" data-theme="light">Light</button>
+            <button class="btn" data-theme="stealth">Stealth</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Security Settings</h2>
+          <ul class="list">
+            <li><strong>MFA:</strong> Enabled</li>
+            <li><strong>Device Trust:</strong> This device trusted</li>
+            <li><strong>Access Zones:</strong> HQ, Field</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>AEGIS:HQ © Aegis Protocol</span>
+    <span>Build v1.0</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
